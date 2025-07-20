@@ -3,6 +3,7 @@ import math
 import sqlite3
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
+import streamlit as st
 
 # Parçalar ve Tabakalar Verisi
 parcalar = [
@@ -193,9 +194,11 @@ waste = calculate_waste(best_solution)
 efficiency = calculate_efficiency(best_solution, tabakalar)
 cost = calculate_cost(best_solution)
 
-print(f"Atık Alanı: {waste} birim²")
-print(f"Tabakaların Etkinliği: {efficiency:.2f}%")
-print(f"Toplam Maliyet: {cost} birim")
+# Sonuçları Streamlit ile göster
+st.title("Kesim Optimizasyonu ve Verimlilik Analizi")
+st.write(f"Atık Alanı: {waste} birim²")
+st.write(f"Tabakaların Etkinliği: {efficiency:.2f}%")
+st.write(f"Toplam Maliyet: {cost} birim")
 
 # Görselleştirme
-visualize_layout(parcalar, tabakalar, best_solution)
+st.pyplot(visualize_layout(parcalar, tabakalar, best_solution))
