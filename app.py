@@ -1,8 +1,6 @@
 import random
 import math
 import sqlite3
-import matplotlib.pyplot as plt
-import matplotlib.patches as patches
 import streamlit as st
 
 # Parçalar ve Tabakalar Verisi
@@ -167,21 +165,13 @@ def calculate_cost(solution, material_cost_per_unit=1, labor_cost_per_unit=0.5):
         total_cost += material_cost + labor_cost
     return total_cost
 
-# Görselleştirme
-def visualize_layout(parcalar, tabakalar, yerlesimler):
-    fig, ax = plt.subplots()
-    ax.set_xlim(0, 3000)
-    ax.set_ylim(0, 1500)
-    
-    for tabaka in tabakalar:
-        ax.add_patch(patches.Rectangle((0, 0), tabaka['uzunluk'], tabaka['genislik'], fill=True, color="lightblue"))
-    
-    for parca, tabaka in yerlesimler:
-        ax.add_patch(patches.Rectangle((random.randint(0, int(tabaka['uzunluk'] - parca['uzunluk'])),
-                                        random.randint(0, int(tabaka['genislik'] - parca['genislik']))),
-                                       parca['uzunluk'], parca['genislik'], fill=True, color="red"))
-    
-    plt.show()
+# Streamlit Görselleştirmesi (Grafikler yerine metinle gösterim)
+def display_results(best_solution, waste, efficiency, cost):
+    st.title("Kesim Optimizasyonu ve Verimlilik Analizi")
+    st.write(f"En İyi Yerleşim Çözümü: {best_solution}")
+    st.write(f"Atık Alanı: {waste} birim²")
+    st.write(f"Tabakaların Etkinliği: {efficiency:.2f}%")
+    st.write(f"Toplam Maliyet: {cost} birim")
 
 # Başlangıç popülasyonu oluştur
 population = generate_initial_population(parcalar, tabakalar, pop_size=10)
@@ -195,10 +185,4 @@ efficiency = calculate_efficiency(best_solution, tabakalar)
 cost = calculate_cost(best_solution)
 
 # Sonuçları Streamlit ile göster
-st.title("Kesim Optimizasyonu ve Verimlilik Analizi")
-st.write(f"Atık Alanı: {waste} birim²")
-st.write(f"Tabakaların Etkinliği: {efficiency:.2f}%")
-st.write(f"Toplam Maliyet: {cost} birim")
-
-# Görselleştirme
-st.pyplot(visualize_layout(parcalar, tabakalar, best_solution))
+display_results(best_solution, waste, efficiency, cost)
