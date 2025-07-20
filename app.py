@@ -3,44 +3,89 @@ import math
 import sqlite3
 import streamlit as st
 
-# Kullanıcıdan verileri almak için Streamlit kullanarak sorular sormak
-st.title("Kesim Optimizasyonu ve Verimlilik Analizi")
+# Sayfa seçim menüsü
+page = st.sidebar.radio("Sayfalar", ["Tabaka Bilgileri", "Parça Bilgileri", "Sonuç"])
 
 # Tabakalar için sorular
-tabaka_sayisi = st.number_input('Tabaka Sayısını Girin', min_value=1, max_value=10, value=3)
+if page == "Tabaka Bilgileri":
+    st.title("Tabaka Bilgileri")
+    st.write("Lütfen sahip olduğunuz **tabaka** bilgilerini girin.")
 
-tabakalar = []
-for i in range(tabaka_sayisi):
-    st.subheader(f"Tabaka {i+1} Bilgileri")
-    tabaka_uzunluk = st.number_input(f"Tabaka {i+1} Uzunluğu (mm)", min_value=100, value=3000)
-    tabaka_genislik = st.number_input(f"Tabaka {i+1} Genişliği (mm)", min_value=100, value=1500)
-    tabaka_kalinlik = st.number_input(f"Tabaka {i+1} Kalınlığı (mm)", min_value=1, value=5)
-    adet = st.number_input(f"Tabaka {i+1} Adet", min_value=1, value=3)
+    tabaka_sayisi = st.number_input('Kaç Farklı Boy Tabakanız Var?', min_value=1, max_value=10, value=3)
 
-    tabakalar.append({
-        "uzunluk": tabaka_uzunluk,
-        "genislik": tabaka_genislik,
-        "kalinlik": tabaka_kalinlik,
-        "adet": adet
-    })
+    tabakalar = []
+    for i in range(tabaka_sayisi):
+        st.subheader(f"Tabaka {i+1} Bilgileri")
+        tabaka_uzunluk = st.number_input(f"Tabaka {i+1} Uzunluğu (mm)", min_value=100, value=3000)
+        tabaka_genislik = st.number_input(f"Tabaka {i+1} Genişliği (mm)", min_value=100, value=1500)
+        tabaka_kalinlik = st.number_input(f"Tabaka {i+1} Kalınlığı (mm)", min_value=1, value=5)
+        adet = st.number_input(f"Tabaka {i+1} Adet", min_value=1, value=3)
+
+        tabakalar.append({
+            "uzunluk": tabaka_uzunluk,
+            "genislik": tabaka_genislik,
+            "kalinlik": tabaka_kalinlik,
+            "adet": adet
+        })
+
+    # Butonla geçişi sağla
+    if st.button('İleri'):
+        st.session_state.tabakalar = tabakalar
+        st.experimental_rerun()
 
 # Parçalar için sorular
-parca_sayisi = st.number_input('Parça Sayısını Girin', min_value=1, max_value=10, value=3)
+if page == "Parça Bilgileri":
+    st.title("Parça Bilgileri")
+    st.write("Lütfen **parça** bilgilerini girin.")
+    
+    if 'tabakalar' not in st.session_state:
+        st.write("Lütfen önce tabaka bilgilerini girin.")
+    else:
+        parca_sayisi = st.number_input('Kaç Farklı Parça Bilgisi Girilecek?', min_value=1, max_value=10, value=3)
 
-parcalar = []
-for i in range(parca_sayisi):
-    st.subheader(f"Parça {i+1} Bilgileri")
-    parca_uzunluk = st.number_input(f"Parça {i+1} Uzunluğu (mm)", min_value=1, value=900)
-    parca_genislik = st.number_input(f"Parça {i+1} Genişliği (mm)", min_value=1, value=300)
-    parca_kalinlik = st.number_input(f"Parça {i+1} Kalınlığı (mm)", min_value=1, value=5)
-    adet_parca = st.number_input(f"Parça {i+1} Adet", min_value=1, value=20)
+        parcalar = []
+        for i in range(parca_sayisi):
+            st.subheader(f"Parça {i+1} Bilgileri")
+            parca_uzunluk = st.number_input(f"Parça {i+1} Uzunluğu (mm)", min_value=1, value=900)
+            parca_genislik = st.number_input(f"Parça {i+1} Genişliği (mm)", min_value=1, value=300)
+            parca_kalinlik = st.number_input(f"Parça {i+1} Kalınlığı (mm)", min_value=1, value=5)
+            adet_parca = st.number_input(f"Parça {i+1} Adet", min_value=1, value=20)
 
-    parcalar.append({
-        "uzunluk": parca_uzunluk,
-        "genislik": parca_genislik,
-        "kalinlik": parca_kalinlik,
-        "adet": adet_parca
-    })
+            parcalar.append({
+                "uzunluk": parca_uzunluk,
+                "genislik": parca_genislik,
+                "kalinlik": parca_kalinlik,
+                "adet": adet_parca
+            })
+
+        # Butonla geçişi sağla
+        if st.button('İleri'):
+            st.session_state.parcalar = parcalar
+            st.experimental_rerun()
+
+# Sonuç sayfası
+if page == "Sonuç":
+    st.title("En İyi Yerleşim Çözümü")
+    
+    if 'parcalar' not in st.session_state or 'tabakalar' not in st.session_state:
+        st.write("Lütfen önce tabaka ve parça bilgilerini girin.")
+    else:
+        # Simüle Tavlama Algoritması
+        best_solution = simule_tavlama(st.session_state.parcalar, st.session_state.tabakalar, max_iter=50, initial_temp=100, cooling_rate=0.99)
+
+        # Atık ve etkinlik hesaplamalarını yapalım
+        waste = calculate_waste(best_solution)
+        efficiency = calculate_efficiency(best_solution, st.session_state.tabakalar)
+        cost = calculate_cost(best_solution)
+
+        # Sonuçları Streamlit ile göster
+        st.write("**En İyi Yerleşim Çözümü:**")
+        for parca, tabaka in best_solution:
+            st.write(f"Parça: {parca['uzunluk']}x{parca['genislik']} mm, Tabaka: {tabaka['uzunluk']}x{tabaka['genislik']} mm")
+
+        st.write(f"**Atık Alanı:** {waste} birim²")
+        st.write(f"**Tabakaların Etkinliği:** {efficiency:.2f}%")
+        st.write(f"**Toplam Maliyet:** {cost} birim")
 
 # Simüle Tavlama Algoritması
 def simule_tavlama(parcalar, tabakalar, max_iter=1000, initial_temp=100, cooling_rate=0.99):
@@ -110,26 +155,3 @@ def calculate_cost(solution, material_cost_per_unit=1, labor_cost_per_unit=0.5):
         labor_cost = parca['uzunluk'] * parca['genislik'] * labor_cost_per_unit
         total_cost += material_cost + labor_cost
     return total_cost
-
-# Sonuçları Gösterme
-def display_results(best_solution, waste, efficiency, cost):
-    st.write("**En İyi Yerleşim Çözümü:**")
-    for parca, tabaka in best_solution:
-        st.write(f"Parça: {parca['uzunluk']}x{parca['genislik']} mm, Tabaka: {tabaka['uzunluk']}x{tabaka['genislik']} mm")
-    st.write(f"Atık Alanı: {waste} birim²")
-    st.write(f"Tabakaların Etkinliği: {efficiency:.2f}%")
-    st.write(f"Toplam Maliyet: {cost} birim")
-
-# Başlangıç popülasyonu oluştur
-population = generate_initial_solution(parcalar, tabakalar)
-
-# Genetik algoritmayı çalıştır
-best_solution = simule_tavlama(parcalar, tabakalar, max_iter=50, initial_temp=100, cooling_rate=0.99)
-
-# Atık ve etkinlik hesaplamalarını yapalım
-waste = calculate_waste(best_solution)
-efficiency = calculate_efficiency(best_solution, tabakalar)
-cost = calculate_cost(best_solution)
-
-# Sonuçları Streamlit ile göster
-display_results(best_solution, waste, efficiency, cost)
