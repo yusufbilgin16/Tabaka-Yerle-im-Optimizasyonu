@@ -3,56 +3,44 @@ import math
 import sqlite3
 import streamlit as st
 
-# Parçalar ve Tabakalar Verisi
-parcalar = [
-    {"uzunluk": 900, "genislik": 300, "kalinlik": 5, "adet": 20},
-    {"uzunluk": 780, "genislik": 180, "kalinlik": 3, "adet": 12},
-    {"uzunluk": 340, "genislik": 550, "kalinlik": 3, "adet": 22},
-]
+# Kullanıcıdan verileri almak için Streamlit kullanarak sorular sormak
+st.title("Kesim Optimizasyonu ve Verimlilik Analizi")
 
-tabakalar = [
-    {"uzunluk": 3000, "genislik": 1500, "kalinlik": 5, "adet": 3},
-    {"uzunluk": 1500, "genislik": 1000, "kalinlik": 3, "adet": 2},
-    {"uzunluk": 1000, "genislik": 2000, "kalinlik": 3, "adet": 1},
-]
+# Tabakalar için sorular
+tabaka_sayisi = st.number_input('Tabaka Sayısını Girin', min_value=1, max_value=10, value=3)
 
-# Veritabanı Bağlantısı
-def create_db():
-    conn = sqlite3.connect('kesim_optimizasyonu.db')
-    cursor = conn.cursor()
-    cursor.execute('''CREATE TABLE IF NOT EXISTS kesim_verileri (
-                        id INTEGER PRIMARY KEY,
-                        parca_uzunluk REAL,
-                        parca_genislik REAL,
-                        parca_kalinlik REAL,
-                        tabaka_uzunluk REAL,
-                        tabaka_genislik REAL,
-                        tabaka_kalinlik REAL,
-                        adet INTEGER)''')
-    conn.commit()
-    conn.close()
+tabakalar = []
+for i in range(tabaka_sayisi):
+    st.subheader(f"Tabaka {i+1} Bilgileri")
+    tabaka_uzunluk = st.number_input(f"Tabaka {i+1} Uzunluğu (mm)", min_value=100, value=3000)
+    tabaka_genislik = st.number_input(f"Tabaka {i+1} Genişliği (mm)", min_value=100, value=1500)
+    tabaka_kalinlik = st.number_input(f"Tabaka {i+1} Kalınlığı (mm)", min_value=1, value=5)
+    adet = st.number_input(f"Tabaka {i+1} Adet", min_value=1, value=3)
 
-# Veritabanına Veri Ekleme
-def insert_data(parca, tabaka, adet):
-    conn = sqlite3.connect('kesim_optimizasyonu.db')
-    cursor = conn.cursor()
-    cursor.execute('''INSERT INTO kesim_verileri (parca_uzunluk, parca_genislik, parca_kalinlik, 
-                                                   tabaka_uzunluk, tabaka_genislik, tabaka_kalinlik, adet) 
-                      VALUES (?, ?, ?, ?, ?, ?, ?)''', 
-                   (parca['uzunluk'], parca['genislik'], parca['kalinlik'],
-                    tabaka['uzunluk'], tabaka['genislik'], tabaka['kalinlik'], adet))
-    conn.commit()
-    conn.close()
+    tabakalar.append({
+        "uzunluk": tabaka_uzunluk,
+        "genislik": tabaka_genislik,
+        "kalinlik": tabaka_kalinlik,
+        "adet": adet
+    })
 
-# Veritabanından Veri Çekme
-def get_data():
-    conn = sqlite3.connect('kesim_optimizasyonu.db')
-    cursor = conn.cursor()
-    cursor.execute('SELECT * FROM kesim_verileri')
-    rows = cursor.fetchall()
-    for row in rows:
-        print(row)
-    conn.close()
+# Parçalar için sorular
+parca_sayisi = st.number_input('Parça Sayısını Girin', min_value=1, max_value=10, value=3)
+
+parcalar = []
+for i in range(parca_sayisi):
+    st.subheader(f"Parça {i+1} Bilgileri")
+    parca_uzunluk = st.number_input(f"Parça {i+1} Uzunluğu (mm)", min_value=1, value=900)
+    parca_genislik = st.number_input(f"Parça {i+1} Genişliği (mm)", min_value=1, value=300)
+    parca_kalinlik = st.number_input(f"Parça {i+1} Kalınlığı (mm)", min_value=1, value=5)
+    adet_parca = st.number_input(f"Parça {i+1} Adet", min_value=1, value=20)
+
+    parcalar.append({
+        "uzunluk": parca_uzunluk,
+        "genislik": parca_genislik,
+        "kalinlik": parca_kalinlik,
+        "adet": adet_parca
+    })
 
 # Simüle Tavlama Algoritması
 def simule_tavlama(parcalar, tabakalar, max_iter=1000, initial_temp=100, cooling_rate=0.99):
@@ -94,48 +82,6 @@ def calculate_cost(solution):
         cost += (tabaka['uzunluk'] * tabaka['genislik']) - (parca['uzunluk'] * parca['genislik'])
     return cost
 
-# Genetik Algoritma için yardımcı fonksiyonlar
-def generate_initial_population(parcalar, tabakalar, pop_size=100):
-    population = []
-    for _ in range(pop_size):
-        solution = generate_initial_solution(parcalar, tabakalar)
-        population.append(solution)
-    return population
-
-def fitness(solution):
-    cost = 0
-    for parca, tabaka in solution:
-        cost += (tabaka['uzunluk'] * tabaka['genislik']) - (parca['uzunluk'] * parca['genislik'])
-    return cost
-
-def selection(population):
-    selected = random.choices(population, k=2)
-    return selected
-
-def crossover(parent1, parent2):
-    crossover_point = random.randint(1, len(parent1)-1)
-    child1 = parent1[:crossover_point] + parent2[crossover_point:]
-    child2 = parent2[:crossover_point] + parent1[crossover_point:]
-    return child1, child2
-
-def mutation(solution, mutation_rate=0.1):
-    if random.random() < mutation_rate:
-        i = random.randint(0, len(solution) - 1)
-        solution[i] = (random.choice(parcalar), random.choice(tabakalar))
-    return solution
-
-def evolve(population, generations=100, mutation_rate=0.1):
-    for gen in range(generations):
-        population.sort(key=lambda x: fitness(x))
-        new_population = []
-        while len(new_population) < len(population):
-            parent1, parent2 = selection(population)
-            child1, child2 = crossover(parent1, parent2)
-            new_population.append(mutation(child1, mutation_rate))
-            new_population.append(mutation(child2, mutation_rate))
-        population = new_population
-    return population[0]
-
 # Etkinlik Hesaplama
 def calculate_efficiency(solution, tabakalar):
     total_used_area = 0
@@ -165,19 +111,20 @@ def calculate_cost(solution, material_cost_per_unit=1, labor_cost_per_unit=0.5):
         total_cost += material_cost + labor_cost
     return total_cost
 
-# Streamlit Görselleştirmesi (Grafikler yerine metinle gösterim)
+# Sonuçları Gösterme
 def display_results(best_solution, waste, efficiency, cost):
-    st.title("Kesim Optimizasyonu ve Verimlilik Analizi")
-    st.write(f"En İyi Yerleşim Çözümü: {best_solution}")
+    st.write("**En İyi Yerleşim Çözümü:**")
+    for parca, tabaka in best_solution:
+        st.write(f"Parça: {parca['uzunluk']}x{parca['genislik']} mm, Tabaka: {tabaka['uzunluk']}x{tabaka['genislik']} mm")
     st.write(f"Atık Alanı: {waste} birim²")
     st.write(f"Tabakaların Etkinliği: {efficiency:.2f}%")
     st.write(f"Toplam Maliyet: {cost} birim")
 
 # Başlangıç popülasyonu oluştur
-population = generate_initial_population(parcalar, tabakalar, pop_size=10)
+population = generate_initial_solution(parcalar, tabakalar)
 
 # Genetik algoritmayı çalıştır
-best_solution = evolve(population, generations=50, mutation_rate=0.05)
+best_solution = simule_tavlama(parcalar, tabakalar, max_iter=50, initial_temp=100, cooling_rate=0.99)
 
 # Atık ve etkinlik hesaplamalarını yapalım
 waste = calculate_waste(best_solution)
