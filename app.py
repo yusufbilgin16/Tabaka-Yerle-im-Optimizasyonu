@@ -4,6 +4,9 @@ import sqlite3
 import streamlit as st
 
 # Sayfa seçim menüsü
+if 'page' not in st.session_state:
+    st.session_state.page = "Tabaka Bilgileri"
+
 page = st.sidebar.radio("Sayfalar", ["Tabaka Bilgileri", "Parça Bilgileri", "Sonuç"])
 
 # Tabakalar için sorular
@@ -32,7 +35,6 @@ if page == "Tabaka Bilgileri":
     if st.button('İleri'):
         st.session_state.tabakalar = tabakalar
         st.session_state.page = "Parça Bilgileri"
-        st.experimental_rerun()
 
 # Parçalar için sorular
 if page == "Parça Bilgileri":
@@ -63,7 +65,6 @@ if page == "Parça Bilgileri":
         if st.button('İleri'):
             st.session_state.parcalar = parcalar
             st.session_state.page = "Sonuç"
-            st.experimental_rerun()
 
 # Sonuç sayfası
 if page == "Sonuç":
@@ -157,4 +158,3 @@ def calculate_cost(solution, material_cost_per_unit=1, labor_cost_per_unit=0.5):
         labor_cost = parca['uzunluk'] * parca['genislik'] * labor_cost_per_unit
         total_cost += material_cost + labor_cost
     return total_cost
-
