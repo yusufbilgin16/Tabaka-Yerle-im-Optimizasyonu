@@ -31,6 +31,7 @@ if page == "Tabaka Bilgileri":
     # Butonla geçişi sağla
     if st.button('İleri'):
         st.session_state.tabakalar = tabakalar
+        st.session_state.page = "Parça Bilgileri"
         st.experimental_rerun()
 
 # Parçalar için sorular
@@ -61,6 +62,7 @@ if page == "Parça Bilgileri":
         # Butonla geçişi sağla
         if st.button('İleri'):
             st.session_state.parcalar = parcalar
+            st.session_state.page = "Sonuç"
             st.experimental_rerun()
 
 # Sonuç sayfası
@@ -155,3 +157,4 @@ def calculate_cost(solution, material_cost_per_unit=1, labor_cost_per_unit=0.5):
         labor_cost = parca['uzunluk'] * parca['genislik'] * labor_cost_per_unit
         total_cost += material_cost + labor_cost
     return total_cost
+
